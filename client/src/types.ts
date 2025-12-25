@@ -1,0 +1,27 @@
+export interface User {
+  name: string;
+  email: string;
+  picture: string;
+}
+
+export interface Transaction {
+  id: number;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  date: string;
+  note: string;
+}
+
+export interface BudgetCategory {
+  name: string;
+  budget_limit: number;
+  spent: number;
+  color: string;
+}
+
+export interface DashboardStats {
+  income: number;
+  expense: number;
+  balance: number;
+}

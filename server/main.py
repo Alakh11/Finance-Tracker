@@ -12,7 +12,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "https://alakh-finance.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +29,7 @@ def get_db():
         ssl_verify_identity=True
     )
 
+# --- Data Models ---
 class TransactionCreate(BaseModel):
     user_email: str
     amount: float
@@ -37,6 +38,13 @@ class TransactionCreate(BaseModel):
     date: str # 'YYYY-MM-DD'
     payment_mode: str
     note: Optional[str] = None
+
+class BudgetUpdate(BaseModel):
+    user_email: str
+    category_name: str
+    limit: float
+
+# --- Endpoints ---
 
 @app.post("/transactions")
 def add_transaction(tx: TransactionCreate):
@@ -78,3 +86,66 @@ def get_dashboard(email: str):
     
     conn.close()
     return {"totals": totals, "recent": recent}
+
+@app.get("/budgets/{email}")
+def get_budgets(email: str):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    defaults = [('Food', '#EF4444'), ('Travel', '#F59E0B'), ('Rent', '#6366F1'), ('Shopping', '#EC4899'), ('Bills', '#10B981')]
+    for name, color in defaults:
+        try:
+            cursor.execute("INSERT IGNORE INTO categories (user_email, name, color) VALUES (%s, %s, %s)", (email, name, color))
+        except:
+            pass
+    conn.commit()
+
+    # 2. Smart Query: Get Budget Limit + Amount Spent this month
+    query = """
+    SELECT 
+        c.name, 
+        c.budget_limit, 
+        c.color,
+        COALESCE(SUM(t.amount), 0) as spent
+    FROM categories c
+    LEFT JOIN transactions t 
+        ON c.name = t.category_id -- Note: ideally map by ID, but for now name is okay if inconsistent
+        OR (t.category_id = 1 AND c.name = 'General') -- Temporary fallback
+    WHERE c.user_email = %s
+    GROUP BY c.name, c.budget_limit, c.color
+    """
+    
+    # SIMPLER QUERY for now (matching by category name directly if you stored text):
+    query = """
+    SELECT 
+        c.name, 
+        c.budget_limit, 
+        c.color,
+        COALESCE(SUM(t.amount), 0) as spent
+    FROM categories c
+    LEFT JOIN transactions t 
+        ON c.name = t.note -- logic tweak: we need to ensure transaction category matches category name
+        AND t.user_email = c.user_email 
+        AND t.type = 'expense'
+        AND MONTH(t.date) = MONTH(CURRENT_DATE()) 
+        AND YEAR(t.date) = YEAR(CURRENT_DATE())
+    WHERE c.user_email = %s
+    GROUP BY c.name, c.budget_limit, c.color
+    """
+    cursor.execute(query, (email,))
+    results = cursor.fetchall()
+    
+    conn.close()
+    return results
+
+@app.post("/budgets")
+def update_budget(data: BudgetUpdate):
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    query = "UPDATE categories SET budget_limit = %s WHERE user_email = %s AND name = %s"
+    cursor.execute(query, (data.limit, data.user_email, data.category_name))
+    
+    conn.commit()
+    conn.close()
+    return {"message": "Budget updated"}
