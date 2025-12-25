@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-  Wallet, TrendingUp, TrendingDown, Plus, 
+import {
+  Wallet, TrendingUp, TrendingDown, Plus,
   CreditCard,
 } from 'lucide-react';
 import type { User, Transaction, DashboardStats } from '../types';
 
 interface DashboardProps {
   user: User;
-} 
+}
 
-const StatCard = ({ title, amount, icon: Icon,  }: any) => {
-//   const styles = {
-//     balance: { bg: 'bg-stone-800', iconBg: 'bg-stone-700', text: 'text-white', sub: 'text-stone-400' },
-//     income: { bg: 'bg-white', iconBg: 'bg-[#F0FDF4]', text: 'text-stone-800', sub: 'text-stone-400', iconColor: 'text-emerald-600' },
-//     expense: { bg: 'bg-white', iconBg: 'bg-[#FEF2F2]', text: 'text-stone-800', sub: 'text-stone-400', iconColor: 'text-rose-600' },
-//   }[type as 'balance' | 'income' | 'expense'];
+const StatCard = ({ title, amount, icon: Icon, }: any) => {
+  //   const styles = {
+  //     balance: { bg: 'bg-stone-800', iconBg: 'bg-stone-700', text: 'text-white', sub: 'text-stone-400' },
+  //     income: { bg: 'bg-white', iconBg: 'bg-[#F0FDF4]', text: 'text-stone-800', sub: 'text-stone-400', iconColor: 'text-emerald-600' },
+  //     expense: { bg: 'bg-white', iconBg: 'bg-[#FEF2F2]', text: 'text-stone-800', sub: 'text-stone-400', iconColor: 'text-rose-600' },
+  //   }[type as 'balance' | 'income' | 'expense'];
 
   return (
     <div className={` p-6 rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-stone-100/50 hover:-translate-y-1 transition-transform duration-300`}>
@@ -37,12 +37,12 @@ const StatCard = ({ title, amount, icon: Icon,  }: any) => {
 export default function Dashboard({ user }: DashboardProps) {
   const [stats, setStats] = useState<DashboardStats>({ income: 0, expense: 0, balance: 0 });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  
-  const [newTx, setNewTx] = useState({ 
-    amount: '', 
-    type: 'expense', 
-    note: '', 
-    date: new Date().toISOString().split('T')[0] 
+
+  const [newTx, setNewTx] = useState({
+    amount: '',
+    type: 'expense',
+    note: '',
+    date: new Date().toISOString().split('T')[0]
   });
 
   const API_URL = "https://finance-tracker-q60v.onrender.com";
@@ -57,8 +57,8 @@ export default function Dashboard({ user }: DashboardProps) {
       const totals = res.data.totals || [];
       let inc = 0, exp = 0;
       totals.forEach((t: any) => {
-        if(t.type === 'income') inc = Number(t.total);
-        if(t.type === 'expense') exp = Number(t.total);
+        if (t.type === 'income') inc = Number(t.total);
+        if (t.type === 'expense') exp = Number(t.total);
       });
       setStats({ income: inc, expense: exp, balance: inc - exp });
       setTransactions(res.data.recent || []);
@@ -74,7 +74,7 @@ export default function Dashboard({ user }: DashboardProps) {
         user_email: user.email,
         amount: parseFloat(newTx.amount),
         type: newTx.type,
-        category: "General", 
+        category: "General",
         payment_mode: "UPI",
         date: newTx.date,
         note: newTx.note
@@ -104,40 +104,40 @@ export default function Dashboard({ user }: DashboardProps) {
           </h2>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
-              <button 
-                onClick={() => setNewTx({...newTx, type: 'income'})}
+              <button
+                onClick={() => setNewTx({ ...newTx, type: 'income' })}
                 className={`p-2 rounded-lg text-sm font-medium transition ${newTx.type === 'income' ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
               >
                 Income
               </button>
-              <button 
-                 onClick={() => setNewTx({...newTx, type: 'expense'})}
-                 className={`p-2 rounded-lg text-sm font-medium transition ${newTx.type === 'expense' ? 'bg-rose-100 text-rose-700 ring-1 ring-rose-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              <button
+                onClick={() => setNewTx({ ...newTx, type: 'expense' })}
+                className={`p-2 rounded-lg text-sm font-medium transition ${newTx.type === 'expense' ? 'bg-rose-100 text-rose-700 ring-1 ring-rose-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
               >
                 Expense
               </button>
             </div>
-            <input 
-              type="number" 
-              placeholder="Amount (₹)" 
+            <input
+              type="number"
+              placeholder="Amount (₹)"
               className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
               value={newTx.amount}
-              onChange={e => setNewTx({...newTx, amount: e.target.value})}
+              onChange={e => setNewTx({ ...newTx, amount: e.target.value })}
             />
-            <input 
-              type="text" 
-              placeholder="Note (e.g. Lunch)" 
+            <input
+              type="text"
+              placeholder="Note (e.g. Lunch)"
               className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
               value={newTx.note}
-              onChange={e => setNewTx({...newTx, note: e.target.value})}
+              onChange={e => setNewTx({ ...newTx, note: e.target.value })}
             />
-            <input 
-              type="date" 
+            <input
+              type="date"
               className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none"
               value={newTx.date}
-              onChange={e => setNewTx({...newTx, date: e.target.value})}
+              onChange={e => setNewTx({ ...newTx, date: e.target.value })}
             />
-            <button 
+            <button
               onClick={addTransaction}
               className="w-full bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700 active:scale-95 transition"
             >
@@ -167,9 +167,9 @@ export default function Dashboard({ user }: DashboardProps) {
               </div>
             ))}
             {transactions.length === 0 && (
-                <div className="text-center py-10">
-                    <p className="text-gray-400">No transactions yet.</p>
-                </div>
+              <div className="text-center py-10">
+                <p className="text-gray-400">No transactions yet.</p>
+              </div>
             )}
           </div>
         </div>

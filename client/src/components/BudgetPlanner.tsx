@@ -11,7 +11,7 @@ export default function BudgetPlanner({ user }: Props) {
   const [budgets, setBudgets] = useState<BudgetCategory[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
   const [newLimit, setNewLimit] = useState('');
-  
+
   const API_URL = "https://finance-tracker-q60v.onrender.com";
 
   useEffect(() => {
@@ -20,10 +20,10 @@ export default function BudgetPlanner({ user }: Props) {
 
   const fetchBudgets = async () => {
     try {
-        const res = await axios.get(`${API_URL}/budgets/${user.email}`);
-        setBudgets(res.data);
-    } catch(err) {
-        console.error("Failed to load budgets");
+      const res = await axios.get(`${API_URL}/budgets/${user.email}`);
+      setBudgets(res.data);
+    } catch (err) {
+      console.error("Failed to load budgets");
     }
   };
 
@@ -41,15 +41,15 @@ export default function BudgetPlanner({ user }: Props) {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-            <h2 className="text-2xl font-bold text-slate-800">Monthly Budgets</h2>
-            <p className="text-slate-500">Track your spending limits per category.</p>
+          <h2 className="text-2xl font-bold text-slate-800">Monthly Budgets</h2>
+          <p className="text-slate-500">Track your spending limits per category.</p>
         </div>
         <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" /> 
-            {budgets.filter(b => b.spent > b.budget_limit && b.budget_limit > 0).length} Categories over budget
+          <TrendingUp className="w-4 h-4" />
+          {budgets.filter(b => b.spent > b.budget_limit && b.budget_limit > 0).length} Categories over budget
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {budgets.map((b) => {
           const percentage = b.budget_limit > 0 ? (b.spent / b.budget_limit) * 100 : 0;
@@ -64,16 +64,16 @@ export default function BudgetPlanner({ user }: Props) {
                     {b.name.charAt(0)}
                   </div>
                   <div>
-                      <h3 className="font-bold text-lg text-slate-800">{b.name}</h3>
-                      <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Budget Category</p>
+                    <h3 className="font-bold text-lg text-slate-800">{b.name}</h3>
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Budget Category</p>
                   </div>
                 </div>
-                
+
                 {/* Edit Mode Logic */}
                 {editing === b.name ? (
                   <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       className="w-20 bg-transparent text-sm font-semibold outline-none px-2"
                       placeholder="Limit"
                       value={newLimit}
@@ -92,16 +92,16 @@ export default function BudgetPlanner({ user }: Props) {
 
               {/* Stats */}
               <div className="flex justify-between items-end mb-2">
-                 <div>
-                    <span className="text-2xl font-bold text-slate-800">₹{b.spent.toLocaleString()}</span>
-                    <span className="text-slate-400 text-sm font-medium ml-1">/ ₹{b.budget_limit.toLocaleString()}</span>
-                 </div>
-                 <span className="text-sm font-bold text-slate-600">{Math.min(percentage, 100).toFixed(0)}%</span>
+                <div>
+                  <span className="text-2xl font-bold text-slate-800">₹{b.spent.toLocaleString()}</span>
+                  <span className="text-slate-400 text-sm font-medium ml-1">/ ₹{b.budget_limit.toLocaleString()}</span>
+                </div>
+                <span className="text-sm font-bold text-slate-600">{Math.min(percentage, 100).toFixed(0)}%</span>
               </div>
-              
+
               {/* Progress Bar */}
               <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner">
-                <div 
+                <div
                   className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
                   style={{ width: `${Math.min(percentage, 100)}%` }}
                 ></div>
@@ -109,7 +109,7 @@ export default function BudgetPlanner({ user }: Props) {
 
               {isOverBudget && (
                 <div className="mt-3 flex items-start gap-2 text-rose-600 bg-rose-50 p-2 rounded-lg text-xs font-medium">
-                  <AlertCircle size={14} className="mt-0.5" /> 
+                  <AlertCircle size={14} className="mt-0.5" />
                   <span>You have exceeded your limit by ₹{(b.spent - b.budget_limit).toLocaleString()}.</span>
                 </div>
               )}
