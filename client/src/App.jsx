@@ -7,6 +7,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [amount, setAmount] = useState('');
+  const API_URL = "https://finance-tracker-q60v.onrender.com";
 
   // Replace with your Google Client ID
   const clientId = "577129960094-dvqmurtgvtui2s2kunj7m73togc94kll.apps.googleusercontent.com"; 
@@ -18,15 +19,14 @@ function App() {
   };
 
   const fetchTransactions = async (email) => {
-    // In dev: http://127.0.0.1:8000. In prod: Your Vercel Backend URL
-    const res = await axios.get(`https://finance-tracker-api.onrender.com/transactions/${email}`);
+    const res = await axios.get(`${API_URL}/transactions/${email}`);
     setTransactions(res.data);
   };
 
   const addTransaction = async () => {
-    await axios.post('https://finance-tracker-api.onrender.com//add-transaction', {
+    await axios.post('${API_URL}//add-transaction', {
       amount: parseFloat(amount),
-      category: "Food", // Hardcoded for demo
+      category: "Food",
       type: "expense",
       user_email: user.email
     });
