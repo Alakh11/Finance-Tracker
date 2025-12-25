@@ -11,6 +11,7 @@ export interface Transaction {
   category: string;
   date: string;
   note: string;
+  payment_mode: string;
 }
 
 export interface BudgetCategory {

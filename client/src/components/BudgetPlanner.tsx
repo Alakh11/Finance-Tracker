@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import type { User, BudgetCategory } from '../types';
-import { Pencil, Save, AlertCircle } from 'lucide-react';
+import { Pencil, Check, X, AlertCircle, TrendingUp } from 'lucide-react';
 
 interface Props {
   user: User;
@@ -11,6 +11,7 @@ export default function BudgetPlanner({ user }: Props) {
   const [budgets, setBudgets] = useState<BudgetCategory[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
   const [newLimit, setNewLimit] = useState('');
+  
   const API_URL = "https://finance-tracker-q60v.onrender.com";
 
   useEffect(() => {
@@ -18,8 +19,12 @@ export default function BudgetPlanner({ user }: Props) {
   }, []);
 
   const fetchBudgets = async () => {
-    const res = await axios.get(`${API_URL}/budgets/${user.email}`);
-    setBudgets(res.data);
+    try {
+        const res = await axios.get(`${API_URL}/budgets/${user.email}`);
+        setBudgets(res.data);
+    } catch(err) {
+        console.error("Failed to load budgets");
+    }
   };
 
   const handleUpdate = async (categoryName: string) => {
@@ -33,58 +38,80 @@ export default function BudgetPlanner({ user }: Props) {
   };
 
   return (
-    <div className="p-6 md:p-10 bg-gray-50 min-h-screen">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Monthly Budget Planner</h2>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <h2 className="text-2xl font-bold text-slate-800">Monthly Budgets</h2>
+            <p className="text-slate-500">Track your spending limits per category.</p>
+        </div>
+        <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" /> 
+            {budgets.filter(b => b.spent > b.budget_limit && b.budget_limit > 0).length} Categories over budget
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {budgets.map((b) => {
           const percentage = b.budget_limit > 0 ? (b.spent / b.budget_limit) * 100 : 0;
           const isOverBudget = b.spent > b.budget_limit && b.budget_limit > 0;
+          const barColor = isOverBudget ? 'bg-rose-500' : (percentage > 80 ? 'bg-orange-500' : 'bg-blue-600');
 
           return (
-            <div key={b.name} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex justify-between items-center mb-4">
+            <div key={b.name} className="bg-white p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white border border-stone-50 hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: b.color }}></div>
-                  <h3 className="font-bold text-lg text-gray-800">{b.name}</h3>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow-sm" style={{ backgroundColor: b.color || '#3b82f6' }}>
+                    {b.name.charAt(0)}
+                  </div>
+                  <div>
+                      <h3 className="font-bold text-lg text-slate-800">{b.name}</h3>
+                      <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Budget Category</p>
+                  </div>
                 </div>
                 
                 {/* Edit Mode Logic */}
                 {editing === b.name ? (
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
                     <input 
                       type="number" 
-                      className="w-24 border rounded p-1 text-sm"
+                      className="w-20 bg-transparent text-sm font-semibold outline-none px-2"
                       placeholder="Limit"
                       value={newLimit}
                       onChange={(e) => setNewLimit(e.target.value)}
+                      autoFocus
                     />
-                    <button onClick={() => handleUpdate(b.name)} className="text-green-600"><Save size={18} /></button>
+                    <button onClick={() => handleUpdate(b.name)} className="p-1 bg-emerald-100 text-emerald-600 rounded hover:bg-emerald-200"><Check size={14} /></button>
+                    <button onClick={() => setEditing(null)} className="p-1 bg-rose-100 text-rose-600 rounded hover:bg-rose-200"><X size={14} /></button>
                   </div>
                 ) : (
-                  <button onClick={() => { setEditing(b.name); setNewLimit(String(b.budget_limit)); }} className="text-gray-400 hover:text-blue-600">
+                  <button onClick={() => { setEditing(b.name); setNewLimit(String(b.budget_limit)); }} className="text-slate-400 hover:text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition-colors">
                     <Pencil size={16} />
                   </button>
                 )}
               </div>
 
-              {/* Progress Bar */}
-              <div className="mb-2 flex justify-between text-sm">
-                <span className="text-gray-500">Spent: <b>₹{b.spent.toLocaleString()}</b></span>
-                <span className="text-gray-500">Limit: <b>₹{b.budget_limit.toLocaleString()}</b></span>
+              {/* Stats */}
+              <div className="flex justify-between items-end mb-2">
+                 <div>
+                    <span className="text-2xl font-bold text-slate-800">₹{b.spent.toLocaleString()}</span>
+                    <span className="text-slate-400 text-sm font-medium ml-1">/ ₹{b.budget_limit.toLocaleString()}</span>
+                 </div>
+                 <span className="text-sm font-bold text-slate-600">{Math.min(percentage, 100).toFixed(0)}%</span>
               </div>
               
-              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+              {/* Progress Bar */}
+              <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner">
                 <div 
-                  className={`h-3 rounded-full transition-all duration-500 ${isOverBudget ? 'bg-red-500' : 'bg-blue-500'}`}
+                  className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
                   style={{ width: `${Math.min(percentage, 100)}%` }}
                 ></div>
               </div>
 
               {isOverBudget && (
-                <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
-                  <AlertCircle size={12} /> Over budget by ₹{(b.spent - b.budget_limit).toLocaleString()}
-                </p>
+                <div className="mt-3 flex items-start gap-2 text-rose-600 bg-rose-50 p-2 rounded-lg text-xs font-medium">
+                  <AlertCircle size={14} className="mt-0.5" /> 
+                  <span>You have exceeded your limit by ₹{(b.spent - b.budget_limit).toLocaleString()}.</span>
+                </div>
               )}
             </div>
           );

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { 
   LayoutDashboard, 
   PieChart, 
@@ -7,16 +7,9 @@ import {
   Menu,
   X,
   Target,
-  Repeat
+  ChevronRight
 } from 'lucide-react';
-import { useState } from 'react';
-
-// --- Types ---
-interface User {
-  name: string;
-  email: string;
-  picture: string;
-}
+import type { User } from '../types';
 
 interface LayoutProps {
   children: ReactNode;
@@ -30,119 +23,95 @@ const Layout = ({ children, user, activeTab, setActiveTab, handleLogout }: Layou
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
     { id: 'transactions', label: 'Transactions', icon: Wallet },
+    { id: 'budget', label: 'Budgets', icon: Target },
     { id: 'analytics', label: 'Analytics', icon: PieChart },
-    { id: 'budget', label: 'Budget & Goals', icon: Target },
-    { id: 'recurring', label: 'Recurring', icon: Repeat },
   ];
 
+  const NavItem = ({ item, onClick }: any) => {
+    const isActive = activeTab === item.id;
+    return (
+      <button
+        onClick={onClick}
+        className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all duration-300 font-medium group ${
+          isActive 
+            ? 'bg-white text-blue-600 shadow-sm ring-1 ring-stone-100' 
+            : 'text-stone-500 hover:bg-white/60 hover:text-stone-700'
+        }`}
+      >
+        <item.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-blue-500' : 'text-stone-400'}`} />
+        <span className="flex-1 text-left">{item.label}</span>
+        {isActive && <ChevronRight className="w-4 h-4 text-blue-300" />}
+      </button>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* --- Sidebar (Desktop) --- */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 fixed h-full z-10">
-        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-            <div className="bg-blue-600 p-2 rounded-lg">
-                <Wallet className="w-5 h-5 text-white" />
+    <div className="min-h-screen flex bg-[#FAFAF9]">
+      {/* --- Sidebar (Floating Style) --- */}
+      <aside className="hidden md:flex flex-col w-72 fixed h-full z-20 pl-4 py-4">
+        <div className="h-full bg-[#F5F5F4] rounded-[2rem] border border-white shadow-xl shadow-stone-200/50 flex flex-col">
+            
+            {/* Header */}
+            <div className="p-8 pb-4">
+                <div className="flex items-center gap-3">
+                    <div className="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-200/50 rotate-3 hover:rotate-6 transition-transform">
+                        <Wallet className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold text-stone-800 tracking-tight">FinTrack</h1>
+                      <p className="text-xs text-stone-400 font-medium tracking-wide">Premium Finance</p>
+                    </div>
+                </div>
             </div>
-            <span className="text-xl font-bold text-gray-800">FinTrack</span>
-        </div>
 
-        <nav className="flex-1 p-4 space-y-2">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
-                activeTab === item.id 
-                  ? 'bg-blue-50 text-blue-700' 
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-blue-600' : 'text-gray-400'}`} />
-              {item.label}
-            </button>
-          ))}
-        </nav>
+            {/* Navigation */}
+            <nav className="flex-1 px-4 space-y-2 mt-4">
+              {menuItems.map((item) => (
+                <NavItem key={item.id} item={item} onClick={() => setActiveTab(item.id)} />
+              ))}
+            </nav>
 
-        <div className="p-4 border-t border-gray-100">
-           <button 
-             onClick={handleLogout}
-             className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all font-medium"
-           >
-             <LogOut className="w-5 h-5" />
-             Sign Out
-           </button>
+            {/* User Profile */}
+            <div className="p-4 mt-auto">
+               <div className="bg-white p-4 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white border border-stone-50 shadow-sm">
+                   <div className="flex items-center gap-3 mb-4">
+                      <img src={user.picture} alt="Profile" className="w-10 h-10 rounded-full ring-2 ring-stone-50" />
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-bold text-stone-700 truncate">{user.name}</p>
+                        <p className="text-xs text-stone-400 truncate">{user.email}</p>
+                      </div>
+                   </div>
+                   <button 
+                     onClick={handleLogout}
+                     className="w-full flex items-center justify-center gap-2 px-4 py-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors text-sm font-semibold"
+                   >
+                     <LogOut className="w-4 h-4" /> Sign Out
+                   </button>
+               </div>
+            </div>
         </div>
       </aside>
 
       {/* --- Mobile Header --- */}
-      <div className="md:hidden fixed w-full bg-white z-20 border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+      <div className="md:hidden fixed w-full bg-[#FAFAF9]/90 backdrop-blur-md z-30 px-6 py-4 flex justify-between items-center border-b border-stone-100">
          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-1.5 rounded-lg">
-                <Wallet className="w-4 h-4 text-white" />
+            <div className="bg-blue-600 p-2 rounded-lg">
+                <Wallet className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-gray-800">FinTrack</span>
+            <span className="font-bold text-stone-800 text-lg">FinTrack</span>
          </div>
-         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-gray-600">
+         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-stone-600 hover:bg-white rounded-xl shadow-sm">
             {isMobileMenuOpen ? <X /> : <Menu />}
          </button>
       </div>
 
-      {/* --- Mobile Menu Overlay --- */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 z-30 md:hidden" onClick={() => setIsMobileMenuOpen(false)}>
-           <div className="bg-white w-64 h-full p-4 flex flex-col" onClick={e => e.stopPropagation()}>
-              <div className="mb-8 font-bold text-xl px-2">Menu</div>
-              <nav className="space-y-2 flex-1">
-                {menuItems.map((item) => (
-                    <button
-                    key={item.id}
-                    onClick={() => {
-                        setActiveTab(item.id);
-                        setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
-                        activeTab === item.id 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'text-gray-500 hover:bg-gray-50'
-                    }`}
-                    >
-                    <item.icon className="w-5 h-5" />
-                    {item.label}
-                    </button>
-                ))}
-              </nav>
-              <button 
-                onClick={handleLogout} 
-                className="flex items-center gap-3 px-4 py-3 text-red-600 font-medium"
-              >
-                <LogOut className="w-5 h-5" /> Sign Out
-              </button>
-           </div>
+      {/* --- Main Content Area (Centered) --- */}
+      <main className="flex-1 md:ml-80 p-6 md:p-10 mt-20 md:mt-0 transition-all duration-300">
+        <div className="max-w-6xl mx-auto space-y-8">
+          {children}
         </div>
-      )}
-
-      {/* --- Main Content Area --- */}
-      <main className="flex-1 md:ml-64 p-4 md:p-8 mt-14 md:mt-0 transition-all duration-300">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 capitalize">{activeTab}</h1>
-                <p className="text-gray-500 text-sm">Welcome back, {user.name.split(' ')[0]}</p>
-            </div>
-            <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm w-fit">
-                <img 
-                  src={user.picture} 
-                  alt="Profile" 
-                  className="w-8 h-8 rounded-full border border-gray-100"
-                />
-                <span className="text-sm font-medium text-gray-700 pr-2 hidden sm:block">
-                    {user.email}
-                </span>
-            </div>
-        </header>
-
-        {children}
       </main>
     </div>
   );
