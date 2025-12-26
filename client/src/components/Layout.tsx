@@ -7,7 +7,9 @@ import {
   Menu,
   X,
   Target,
-  ChevronRight
+  ChevronRight,
+  Settings,
+  Repeat
 } from 'lucide-react';
 import type { User } from '../types';
 
@@ -25,8 +27,10 @@ const Layout = ({ children, user, activeTab, setActiveTab, handleLogout }: Layou
   const menuItems = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
     { id: 'transactions', label: 'Transactions', icon: Wallet },
+    { id: 'recurring', label: 'Recurring Bills', icon: Repeat },
     { id: 'budget', label: 'Budgets', icon: Target },
     { id: 'analytics', label: 'Analytics', icon: PieChart },
+    { id: 'categories', label: 'Settings', icon: Settings },
   ];
 
   const NavItem = ({ item, onClick }: any) => {

@@ -42,7 +42,8 @@ export default function Dashboard({ user }: DashboardProps) {
     amount: '',
     type: 'expense',
     note: '',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    is_recurring: false
   });
 
   const API_URL = "https://finance-tracker-q60v.onrender.com";
@@ -77,7 +78,8 @@ export default function Dashboard({ user }: DashboardProps) {
         category: "General",
         payment_mode: "UPI",
         date: newTx.date,
-        note: newTx.note
+        note: newTx.note,
+        is_recurring: newTx.is_recurring
       });
       setNewTx({ ...newTx, amount: '', note: '' }); // Clear form
       fetchDashboard(); // Refresh data
@@ -137,6 +139,19 @@ export default function Dashboard({ user }: DashboardProps) {
               value={newTx.date}
               onChange={e => setNewTx({ ...newTx, date: e.target.value })}
             />
+
+            <div className="flex items-center gap-3 py-2">
+                <input 
+                    type="checkbox" 
+                    id="recurring"
+                    className="w-5 h-5 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={newTx.is_recurring}
+                    onChange={e => setNewTx({...newTx, is_recurring: e.target.checked})}
+                />
+                <label htmlFor="recurring" className="text-sm font-semibold text-slate-600 select-none cursor-pointer">
+                    This is a recurring payment (Rent, Netflix)
+                </label>
+            </div>
             <button
               onClick={addTransaction}
               className="w-full bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700 active:scale-95 transition"

@@ -4,11 +4,13 @@ import { jwtDecode } from "jwt-decode";
 import Layout from './components/Layout'; 
 import Dashboard from './components/Dashboard'; 
 import BudgetPlanner from './components/BudgetPlanner'; 
-import Analytics from './components/Analytics'; // NEW
-import Transactions from './components/Transactions'; // NEW
-import Goals from './components/Goals'; // NEW (Add 'goals' to Layout menuItems first if you want a separate tab, or put it in Budget)
+import Analytics from './components/Analytics'; 
+import Transactions from './components/Transactions'; 
+import Goals from './components/Goals';
 import { Wallet } from 'lucide-react';
 import type { User } from './types';
+import CategoryManager from './components/CategoryManager';
+import Recurring from './components/Recurring';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -62,11 +64,13 @@ function App() {
       {activeTab === 'budget' && (
           <div className="space-y-12">
               <BudgetPlanner user={user} />
-              <Goals user={user} />
           </div>
       )}
+      {activeTab === 'goals' && <Goals user={user} />}
       {activeTab === 'transactions' && <Transactions user={user} />}
       {activeTab === 'analytics' && <Analytics user={user} />}
+      {activeTab === 'categories' && <CategoryManager user={user} />}
+      {activeTab === 'recurring' && <Recurring user={user} />}
     </Layout>
   );
 }
