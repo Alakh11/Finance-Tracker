@@ -15,5 +15,8 @@ export default defineConfig({
   },
   preview: {
     allowedHosts: ['all']
+  },
+  build: {
+    chunkSizeWarningLimit: 1000 // in KB (1000 KB = 1 MB)
   }
 })
