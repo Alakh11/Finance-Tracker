@@ -1,32 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { Search, Trash2 } from 'lucide-react';
-import type { User, Transaction } from '../types';
+import { useLoaderData, useRouter } from '@tanstack/react-router';
+import type { Transaction } from '../types';
 
-export default function Transactions({ user }: { user: User }) {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+export default function Transactions() {
+  const router = useRouter();
+  const transactions = useLoaderData({ from: '/transactions' });
+  
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const API_URL = "https://finance-tracker-q60v.onrender.com";
 
-  useEffect(() => {
-    axios.get(`${API_URL}/transactions/all/${user.email}`).then(res => setTransactions(res.data));
-  }, []);
-
-  const filtered = transactions.filter(t => {
+  const filtered = transactions.filter((t: Transaction) => {
      const matchesSearch = (t.note || t.category).toLowerCase().includes(search.toLowerCase());
      const matchesType = filter === 'all' || t.type === filter;
      return matchesSearch && matchesType;
   });
-//   const deleteTransaction = async (id: number) => {
-//     if(confirm("Delete this transaction?")) {
-//         await axios.delete(`${API_URL}/transactions/${id}`);
-//         setTransactions(transactions.filter(t => t.id !== id));
-//     }
-// }
+
+  const deleteTransaction = async (id: number) => {
+    if(confirm("Delete this transaction?")) {
+        await axios.delete(`${API_URL}/transactions/${id}`);
+
+        router.invalidate();
+    }
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
        <div className="flex flex-col md:flex-row justify-between gap-4">
           <h2 className="text-3xl font-bold text-stone-800">Transactions</h2>
           <div className="flex gap-2">
@@ -63,8 +64,8 @@ export default function Transactions({ user }: { user: User }) {
                 </tr>
              </thead>
              <tbody className="divide-y divide-stone-50">
-                {filtered.map((t, i) => (
-                   <tr key={i} className="hover:bg-stone-50/50 transition-colors">
+                {filtered.map((t: Transaction) => (
+                   <tr key={t.id} className="hover:bg-stone-50/50 transition-colors">
                       <td className="p-6 font-bold text-stone-700">{t.note || 'No Description'}</td>
                       <td className="p-6">
                          <span className="px-3 py-1 rounded-full bg-stone-100 text-xs font-bold text-stone-500">{t.category}</span>
@@ -74,13 +75,9 @@ export default function Transactions({ user }: { user: User }) {
                         <span className={t.type === 'income' ? 'text-emerald-600' : 'text-stone-800'}>
                             {t.type === 'income' ? '+' : '-'} ₹{t.amount.toLocaleString()}
                         </span>
-                        <button onClick={async () => {
-                            if(confirm("Delete transaction?")) {
-                                await axios.delete(`https://finance-tracker-q60v.onrender.com/transactions/${t.id}`);
-                                // Refresh logic (e.g. reload page or update state)
-                                window.location.reload(); 
-                            }
-                        }} className="text-stone-300 hover:text-rose-500"><Trash2 size={18} /></button>
+                        <button onClick={() => deleteTransaction(t.id)} className="text-stone-300 hover:text-rose-500 transition">
+                            <Trash2 size={18} />
+                        </button>
                     </td>
                    </tr>
                 ))}

@@ -1,18 +1,10 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useLoaderData } from '@tanstack/react-router';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import type { User } from '../types';
 
-interface Props { user: User; }
-
-export default function Analytics({ user }: Props) {
-  const [data, setData] = useState<{ pie: any[], bar: any[] }>({ pie: [], bar: [] });
-  const API_URL = "https://finance-tracker-q60v.onrender.com";
+export default function Analytics() {
+  const { pie, bar } = useLoaderData({ from: '/analytics' });
+  
   const COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
-
-  useEffect(() => {
-    axios.get(`${API_URL}/analytics/${user.email}`).then(res => setData(res.data));
-  }, []);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -27,14 +19,14 @@ export default function Analytics({ user }: Props) {
              <ResponsiveContainer width="100%" height="100%">
                <PieChart>
                  <Pie 
-                    data={data.pie} 
+                    data={pie} 
                     cx="50%" cy="50%" 
                     innerRadius={60} 
                     outerRadius={80} 
                     paddingAngle={5} 
                     dataKey="value"
                  >
-                   {data.pie.map(( index) => (
+                   {pie.map((_entry: any, index: number) => (
                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                    ))}
                  </Pie>
@@ -50,7 +42,7 @@ export default function Analytics({ user }: Props) {
            <h3 className="text-lg font-bold text-stone-700 mb-6">Income vs Expense</h3>
            <div className="h-64">
              <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={data.bar}>
+               <BarChart data={bar}>
                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
                  <Tooltip cursor={{fill: '#f5f5f4'}} />
                  <Bar dataKey="income" fill="#10B981" radius={[4, 4, 0, 0]} />

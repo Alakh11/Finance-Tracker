@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
+import { useLoaderData, useRouter } from '@tanstack/react-router';
 import { Plus, Trash2 } from 'lucide-react';
-import type { User } from '../types';
 
-export default function CategoryManager({ user }: { user: User }) {
-  const [categories, setCategories] = useState<any[]>([]);
+export default function CategoryManager() {
+  const router = useRouter();
+  const user = router.options.context.user;
+  const categories = useLoaderData({ from: '/categories' });
+
   const [newCat, setNewCat] = useState({ name: '', color: '#3B82F6', type: 'expense' });
   const API_URL = "https://finance-tracker-q60v.onrender.com";
-
-  useEffect(() => { loadCategories(); }, []);
-
-  const loadCategories = () => axios.get(`${API_URL}/categories/${user.email}`).then(res => setCategories(res.data));
 
   const addCategory = async () => {
     if(!newCat.name) return;
@@ -21,15 +20,15 @@ export default function CategoryManager({ user }: { user: User }) {
             color: newCat.color,
             type: newCat.type
         });
-        setNewCat({ name: '', color: '#3B82F6', type: 'expense' });
-        loadCategories();
+        setNewCat({ name: '', color: '#3B82F6', type: 'expense' }); // Reset form
+        router.invalidate(); // Refresh list
     } catch(e) { alert("Error creating category"); }
   };
 
   const deleteCategory = async (id: number) => {
       if(confirm('Delete this category? ALL associated transactions will be deleted.')) {
           await axios.delete(`${API_URL}/categories/${id}`);
-          loadCategories();
+          router.invalidate(); // Refresh list
       }
   };
 

@@ -1,31 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
-import type { User, BudgetCategory } from '../types';
+import { useLoaderData, useRouter } from '@tanstack/react-router';
 import { Pencil, Check, X, AlertCircle, TrendingUp } from 'lucide-react';
 
-interface Props {
-  user: User;
-}
+export default function BudgetPlanner() {
+  const router = useRouter();
+  const user = router.options.context.user;
+  const { budgets } = useLoaderData({ from: '/budget' });
 
-export default function BudgetPlanner({ user }: Props) {
-  const [budgets, setBudgets] = useState<BudgetCategory[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
   const [newLimit, setNewLimit] = useState('');
 
   const API_URL = "https://finance-tracker-q60v.onrender.com";
-
-  useEffect(() => {
-    fetchBudgets();
-  }, []);
-
-  const fetchBudgets = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/budgets/${user.email}`);
-      setBudgets(res.data);
-    } catch (err) {
-      console.error("Failed to load budgets");
-    }
-  };
 
   const handleUpdate = async (categoryName: string) => {
     await axios.post(`${API_URL}/budgets`, {
@@ -34,7 +20,8 @@ export default function BudgetPlanner({ user }: Props) {
       limit: parseFloat(newLimit)
     });
     setEditing(null);
-    fetchBudgets();
+    // 2. Refresh data
+    router.invalidate();
   };
 
   return (
@@ -46,18 +33,18 @@ export default function BudgetPlanner({ user }: Props) {
         </div>
         <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
           <TrendingUp className="w-4 h-4" />
-          {budgets.filter(b => b.spent > b.budget_limit && b.budget_limit > 0).length} Categories over budget
+          {budgets.filter((b: any) => b.spent > b.budget_limit && b.budget_limit > 0).length} Categories over budget
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {budgets.map((b) => {
+        {budgets.map((b: any) => {
           const percentage = b.budget_limit > 0 ? (b.spent / b.budget_limit) * 100 : 0;
           const isOverBudget = b.spent > b.budget_limit && b.budget_limit > 0;
           const barColor = isOverBudget ? 'bg-rose-500' : (percentage > 80 ? 'bg-orange-500' : 'bg-blue-600');
 
           return (
-            <div key={b.name} className="bg-white p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white border border-stone-50 hover:shadow-md transition-shadow">
+            <div key={b.name} className="bg-white p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-stone-50 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold text-white shadow-sm" style={{ backgroundColor: b.color || '#3b82f6' }}>
@@ -69,7 +56,6 @@ export default function BudgetPlanner({ user }: Props) {
                   </div>
                 </div>
 
-                {/* Edit Mode Logic */}
                 {editing === b.name ? (
                   <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
                     <input
@@ -90,7 +76,6 @@ export default function BudgetPlanner({ user }: Props) {
                 )}
               </div>
 
-              {/* Stats */}
               <div className="flex justify-between items-end mb-2">
                 <div>
                   <span className="text-2xl font-bold text-slate-800">₹{b.spent.toLocaleString()}</span>
@@ -99,7 +84,6 @@ export default function BudgetPlanner({ user }: Props) {
                 <span className="text-sm font-bold text-slate-600">{Math.min(percentage, 100).toFixed(0)}%</span>
               </div>
 
-              {/* Progress Bar */}
               <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}

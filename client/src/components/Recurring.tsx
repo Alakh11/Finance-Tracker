@@ -1,28 +1,36 @@
-import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Repeat, Plus } from 'lucide-react';
-import type { User, Transaction } from '../types';
+import { useLoaderData, useRouter } from '@tanstack/react-router';
+import { Repeat, Plus, Trash2, } from 'lucide-react';
+import type { Transaction } from '../types';
 
-export default function Recurring({ user }: { user: User }) {
-  const [recurring, setRecurring] = useState<Transaction[]>([]);
+export default function Recurring() {
+  const router = useRouter();
+  const user = router.options.context.user;
+  const recurring = useLoaderData({ from: '/recurring' }); // Get data from loader
+  
   const API_URL = "https://finance-tracker-q60v.onrender.com";
 
-  useEffect(() => {
-    axios.get(`${API_URL}/recurring/${user.email}`).then(res => setRecurring(res.data));
-  }, []);
-
   const processPayment = async (tx: Transaction) => {
+      // Clone the transaction for TODAY
       await axios.post(`${API_URL}/transactions`, {
           user_email: user.email,
           amount: tx.amount,
           type: tx.type,
-          category: "Bills",
+          category: tx.category,
           payment_mode: tx.payment_mode || "Card",
           date: new Date().toISOString().split('T')[0],
           note: tx.note,
           is_recurring: true
       });
       alert(`Processed ${tx.note} for this month!`);
+      router.invalidate(); // Refresh data
+  };
+
+  const stopRecurring = async (id: number) => {
+      if(confirm("Stop this recurring bill? It will no longer appear here.")) {
+          await axios.delete(`${API_URL}/recurring/stop/${id}`);
+          router.invalidate();
+      }
   };
 
   return (
@@ -31,15 +39,20 @@ export default function Recurring({ user }: { user: User }) {
         <p className="text-stone-500">Manage your subscriptions, rent, and EMIs.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recurring.map((tx, i) => (
-                <div key={i} className="bg-white p-6 rounded-[2rem] shadow-sm border border-stone-100 relative overflow-hidden">
+            {recurring.map((tx: any, i: number) => (
+                <div key={i} className="bg-white p-6 rounded-[2rem] shadow-sm border border-stone-100 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
                         <Repeat size={100} />
                     </div>
                     
                     <div className="relative z-10">
-                        <h3 className="text-xl font-bold text-stone-800">{tx.note}</h3>
-                        <p className="text-stone-400 text-sm font-medium mb-4">Auto-detected from history</p>
+                        <div className="flex justify-between items-start">
+                            <h3 className="text-xl font-bold text-stone-800">{tx.note || 'Subscription'}</h3>
+                            <button onClick={() => stopRecurring(tx.id)} className="text-stone-300 hover:text-rose-500 transition">
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
+                        <p className="text-stone-400 text-sm font-medium mb-4">{tx.category}</p>
                         
                         <div className="flex items-baseline gap-1 mb-6">
                             <span className="text-3xl font-bold text-stone-800">₹{tx.amount.toLocaleString()}</span>

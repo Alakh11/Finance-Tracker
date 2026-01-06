@@ -1,0 +1,144 @@
+import { 
+  createRouter, 
+  createRoute, 
+  createRootRouteWithContext, 
+  Outlet, 
+  redirect 
+} from '@tanstack/react-router';
+import axios from 'axios';
+import Layout from './components/Layout';
+import Dashboard from './components/Dashboard';
+import Transactions from './components/Transactions';
+import Recurring from './components/Recurring';
+import BudgetPlanner from './components/BudgetPlanner';
+import Goals from './components/Goals';
+import Analytics from './components/Analytics';
+import CategoryManager from './components/CategoryManager';
+import type { User } from './types';
+
+// Context for the router (User is required)
+interface RouterContext {
+  user: User;
+}
+
+const API_URL = "https://finance-tracker-q60v.onrender.com";
+
+// --- 1. Root Route (Layout) ---
+const rootRoute = createRootRouteWithContext<RouterContext>()({
+  component: () => (
+    <Layout>
+      <Outlet />
+    </Layout>
+  ),
+});
+
+// --- 2. Dashboard Route ---
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'dashboard',
+  loader: async ({ context }) => {
+    const [dashboard, categories] = await Promise.all([
+        axios.get(`${API_URL}/dashboard/${context.user.email}`),
+        axios.get(`${API_URL}/categories/${context.user.email}`)
+    ]);
+    // Merge them: { totals: [], recent: [], categories: [] }
+    return { ...dashboard.data, categories: categories.data };
+  },
+  component: Dashboard,
+});
+
+// --- 3. Transactions Route ---
+const transactionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'transactions',
+  loader: async ({ context }) => {
+    const res = await axios.get(`${API_URL}/transactions/all/${context.user.email}`);
+    return res.data;
+  },
+  component: Transactions,
+});
+
+// --- 4. Budget Route (Budgets + Goals) ---
+const budgetRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'budget',
+  loader: async ({ context }) => {
+    const [budgets, goals] = await Promise.all([
+        axios.get(`${API_URL}/budgets/${context.user.email}`),
+        axios.get(`${API_URL}/goals/${context.user.email}`)
+    ]);
+    return { budgets: budgets.data, goals: goals.data };
+  },
+  component: () => (
+    <div className="space-y-12">
+        <BudgetPlanner />
+        <Goals />
+    </div>
+  ),
+});
+
+// --- 5. Recurring Route ---
+const recurringRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'recurring',
+  loader: async ({ context }) => {
+    const res = await axios.get(`${API_URL}/recurring/${context.user.email}`);
+    return res.data;
+  },
+  component: Recurring,
+});
+
+// --- 6. Analytics Route ---
+const analyticsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'analytics',
+  loader: async ({ context }) => {
+    const res = await axios.get(`${API_URL}/analytics/${context.user.email}`);
+    return res.data;
+  },
+  component: Analytics,
+});
+
+// --- 7. Categories Route ---
+const categoriesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'categories',
+  loader: async ({ context }) => {
+    const res = await axios.get(`${API_URL}/categories/${context.user.email}`);
+    return res.data;
+  },
+  component: CategoryManager,
+});
+
+// --- 8. Index Redirect ---
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/dashboard' });
+  },
+});
+
+// --- Assemble Route Tree ---
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  dashboardRoute,
+  transactionsRoute,
+  budgetRoute,
+  recurringRoute,
+  analyticsRoute,
+  categoriesRoute,
+]);
+
+export const router = createRouter({
+  routeTree,
+  context: { user: undefined! }, // Initial context placeholder
+});
+
+// Register for type safety
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
+}
+export default router;
